@@ -39,10 +39,10 @@ from alphafold.relax import relax
 #### USER CONFIGURATION ####
 
 # Set to target of scripts/download_all_databases.sh
-DOWNLOAD_DIR = '/data01/xukui/alphafold'
+DOWNLOAD_DIR = '/alphafold_data_set'
 
 # Path to a directory that will store the results.
-output_dir = '/data01/xukui/alphafold/out'
+output_dir = '~/af2_out'
 
 # Names of models to use.
 model_names = [
@@ -65,7 +65,7 @@ uniref90_database_path = os.path.join(
 
 # Path to the MGnify database for use by JackHMMER.
 mgnify_database_path = os.path.join(
-    DOWNLOAD_DIR, 'mgnify', 'mgy_clusters.fa')
+    DOWNLOAD_DIR, 'mgnify', 'mgy_clusters_2018_12.fa')
 
 # Path to the BFD database for use by HHblits.
 bfd_database_path = os.path.join(
