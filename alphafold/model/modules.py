@@ -17,11 +17,6 @@
 The structure generation code is in 'folding.py'.
 """
 import functools
-
-import haiku as hk
-import jax
-import jax.numpy as jnp
-
 from alphafold.common import residue_constants
 from alphafold.model import all_atom
 from alphafold.model import common_modules
@@ -32,6 +27,9 @@ from alphafold.model import mapping
 from alphafold.model import prng
 from alphafold.model import quat_affine
 from alphafold.model import utils
+import haiku as hk
+import jax
+import jax.numpy as jnp
 
 
 def softmax_cross_entropy(logits, labels):
@@ -237,6 +235,10 @@ class AlphaFoldIteration(hk.Module):
         continue
       else:
         ret[name] = module(representations, batch, is_training)
+        if 'representations' in ret[name]:
+          # Extra representations from the head. Used by the structure module
+          # to provide activations for the PredictedLDDTHead.
+          representations.update(ret[name].pop('representations'))
       if compute_loss:
         total_loss += loss(module, head_config, ret, name)
 
@@ -339,17 +341,18 @@ class AlphaFold(hk.Module):
           compute_loss=compute_loss,
           ensemble_representations=ensemble_representations)
 
-    if self.config.num_recycle:
-      emb_config = self.config.embeddings_and_evoformer
-      prev = {
-          'prev_pos': jnp.zeros(
-              [num_residues, residue_constants.atom_type_num, 3]),
-          'prev_msa_first_row': jnp.zeros(
-              [num_residues, emb_config.msa_channel]),
-          'prev_pair': jnp.zeros(
-              [num_residues, num_residues, emb_config.pair_channel]),
-      }
+    prev = {}
+    emb_config = self.config.embeddings_and_evoformer
+    if emb_config.recycle_pos:
+      prev['prev_pos'] = jnp.zeros(
+          [num_residues, residue_constants.atom_type_num, 3])
+    if emb_config.recycle_features:
+      prev['prev_msa_first_row'] = jnp.zeros(
+          [num_residues, emb_config.msa_channel])
+      prev['prev_pair'] = jnp.zeros(
+          [num_residues, num_residues, emb_config.pair_channel])
 
+    if self.config.num_recycle:
       if 'num_iter_recycling' in batch:
         # Training time: num_iter_recycling is in batch.
         # The value for each ensemble batch is the same, so arbitrarily taking
@@ -376,7 +379,6 @@ class AlphaFold(hk.Module):
             body,
             (0, prev))
     else:
-      prev = {}
       num_iter = 0
 
     ret = do_call(prev=prev, recycle_idx=num_iter)
@@ -630,7 +632,7 @@ class GlobalAttention(hk.Module):
     self.global_config = global_config
     self.output_dim = output_dim
 
-  def __call__(self, q_data, m_data, q_mask, bias):
+  def __call__(self, q_data, m_data, q_mask):
     """Builds GlobalAttention module.
 
     Arguments:
@@ -641,7 +643,6 @@ class GlobalAttention(hk.Module):
       q_mask: A binary mask for q_data with zeros in the padded sequence
         elements and ones otherwise. Size [batch_size, N_queries, q_channels]
         (or broadcastable to this shape).
-      bias: A bias for the attention.
 
     Returns:
       A float32 tensor of size [batch_size, N_queries, output_dim].
@@ -878,7 +879,7 @@ class MSAColumnGlobalAttention(hk.Module):
     msa_act = mapping.inference_subbatch(
         attn_mod,
         self.global_config.subbatch_size,
-        batched_args=[msa_act, msa_act, msa_mask, bias],
+        batched_args=[msa_act, msa_act, msa_mask],
         nonbatched_args=[],
         low_memory=not is_training)
 
@@ -963,6 +964,11 @@ class MaskedMsaHead(hk.Module):
     self.config = config
     self.global_config = global_config
 
+    if global_config.multimer_mode:
+      self.num_output = len(residue_constants.restypes_with_x_and_gap)
+    else:
+      self.num_output = config.num_output
+
   def __call__(self, representations, batch, is_training):
     """Builds MaskedMsaHead module.
 
@@ -979,7 +985,7 @@ class MaskedMsaHead(hk.Module):
     """
     del batch
     logits = common_modules.Linear(
-        self.config.num_output,
+        self.num_output,
         initializer=utils.final_init(self.global_config),
         name='logits')(
             representations['msa'])
@@ -987,7 +993,7 @@ class MaskedMsaHead(hk.Module):
 
   def loss(self, value, batch):
     errors = softmax_cross_entropy(
-        labels=jax.nn.one_hot(batch['true_msa'], num_classes=23),
+        labels=jax.nn.one_hot(batch['true_msa'], num_classes=self.num_output),
         logits=value['logits'])
     loss = (jnp.sum(errors * batch['bert_mask'], axis=(-2, -1)) /
             (1e-8 + jnp.sum(batch['bert_mask'], axis=(-2, -1))))
@@ -1007,7 +1013,7 @@ class PredictedLDDTHead(hk.Module):
     self.global_config = global_config
 
   def __call__(self, representations, batch, is_training):
-    """Builds ExperimentallyResolvedHead module.
+    """Builds PredictedLDDTHead module.
 
     Arguments:
       representations: Dictionary of representations, must contain:
@@ -1069,7 +1075,7 @@ class PredictedLDDTHead(hk.Module):
         # Shape (batch_size, num_res, 1)
         true_points_mask=all_atom_mask[None, :, 1:2].astype(jnp.float32),
         cutoff=15.,
-        per_residue=True)[0]
+        per_residue=True)
     lddt_ca = jax.lax.stop_gradient(lddt_ca)
 
     num_bins = self.config.num_bins
@@ -1303,6 +1309,12 @@ class TriangleMultiplication(hk.Module):
     left_proj_act *= left_gate_values
     right_proj_act *= right_gate_values
 
+    # "Outgoing" edges equation: 'ikc,jkc->ijc'
+    # "Incoming" edges equation: 'kjc,kic->ijc'
+    # Note on the Suppl. Alg. 11 & 12 notation:
+    # For the "outgoing" edges, a = left_proj_act and b = right_proj_act
+    # For the "incoming" edges, it's swapped:
+    #   b = left_proj_act and a = right_proj_act
     act = jnp.einsum(c.equation, left_proj_act, right_proj_act)
 
     act = hk.LayerNorm(
@@ -1589,6 +1601,19 @@ class EvoformerIteration(hk.Module):
     safe_key, *sub_keys = safe_key.split(10)
     sub_keys = iter(sub_keys)
 
+    outer_module = OuterProductMean(
+        config=c.outer_product_mean,
+        global_config=self.global_config,
+        num_output_channel=int(pair_act.shape[-1]),
+        name='outer_product_mean')
+    if c.outer_product_mean.first:
+      pair_act = dropout_wrapper_fn(
+          outer_module,
+          msa_act,
+          msa_mask,
+          safe_key=next(sub_keys),
+          output_act=pair_act)
+
     msa_act = dropout_wrapper_fn(
         MSARowAttentionWithPairBias(
             c.msa_row_attention_with_pair_bias, gc,
@@ -1616,16 +1641,13 @@ class EvoformerIteration(hk.Module):
         msa_mask,
         safe_key=next(sub_keys))
 
-    pair_act = dropout_wrapper_fn(
-        OuterProductMean(
-            config=c.outer_product_mean,
-            global_config=self.global_config,
-            num_output_channel=int(pair_act.shape[-1]),
-            name='outer_product_mean'),
-        msa_act,
-        msa_mask,
-        safe_key=next(sub_keys),
-        output_act=pair_act)
+    if not c.outer_product_mean.first:
+      pair_act = dropout_wrapper_fn(
+          outer_module,
+          msa_act,
+          msa_mask,
+          safe_key=next(sub_keys),
+          output_act=pair_act)
 
     pair_act = dropout_wrapper_fn(
         TriangleMultiplication(c.triangle_multiplication_outgoing, gc,
@@ -1707,7 +1729,7 @@ class EmbeddingsAndEvoformer(hk.Module):
     # Inject previous outputs for recycling.
     # Jumper et al. (2021) Suppl. Alg. 2 "Inference" line 6
     # Jumper et al. (2021) Suppl. Alg. 32 "RecyclingEmbedder"
-    if c.recycle_pos and 'prev_pos' in batch:
+    if c.recycle_pos:
       prev_pseudo_beta = pseudo_beta_fn(
           batch['aatype'], batch['prev_pos'], None)
       dgram = dgram_from_positions(prev_pseudo_beta, **self.config.prev_pos)
@@ -1716,6 +1738,7 @@ class EmbeddingsAndEvoformer(hk.Module):
               dgram)
 
     if c.recycle_features:
+#<<<<<<< HEAD
       if 'prev_msa_first_row' in batch:
         prev_msa_first_row = hk.LayerNorm([-1],
                                           True,
@@ -1730,6 +1753,22 @@ class EmbeddingsAndEvoformer(hk.Module):
                                          True,
                                          name='prev_pair_norm')(
                                              batch['prev_pair'])
+#=======
+#      prev_msa_first_row = hk.LayerNorm(
+#          axis=[-1],
+#          create_scale=True,
+#          create_offset=True,
+#          name='prev_msa_first_row_norm')(
+#              batch['prev_msa_first_row'])
+#      msa_activations = msa_activations.at[0].add(prev_msa_first_row)
+
+#      pair_activations += hk.LayerNorm(
+#          axis=[-1],
+#          create_scale=True,
+#          create_offset=True,
+#          name='prev_pair_norm')(
+#              batch['prev_pair'])
+#>>>>>>> v2.2.2
 
     # Relative position encoding.
     # Jumper et al. (2021) Suppl. Alg. 4 "relpos"

@@ -26,12 +26,12 @@ fi
 
 if ! command -v aria2c &> /dev/null ; then
     echo "Error: aria2c could not be found. Please install aria2c (sudo apt install aria2)."
-    exit
+    exit 1
 fi
 
 DOWNLOAD_DIR="$1"
 ROOT_DIR="${DOWNLOAD_DIR}/params"
-SOURCE_URL="https://storage.googleapis.com/alphafold/alphafold_params_2021-07-14.tar"
+SOURCE_URL="https://storage.googleapis.com/alphafold/alphafold_params_2022-03-02.tar"
 BASENAME=$(basename "${SOURCE_URL}")
 
 mkdir --parents "${ROOT_DIR}"
