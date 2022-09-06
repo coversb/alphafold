@@ -178,8 +178,8 @@ flags.DEFINE_string('small_bfd_database_path', None, 'Path to the small '
 #flags.DEFINE_string('uniclust30_database_path', uniclust30_database_path, 'Path to the Uniclust30 '
 #                    'database for use by HHblits.')
 
-# flags.DEFINE_string('uniprot_database_path', None, 'Path to the Uniprot '
-#                     'database for use by JackHMMer.')
+flags.DEFINE_string('uniprot_database_path', None, 'Path to the Uniprot '
+                    'database for use by JackHMMer.')
 # flags.DEFINE_string('pdb70_database_path', None, 'Path to the PDB70 '
 #                     'database for use by HHsearch.')
 # v2.2.2
