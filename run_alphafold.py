@@ -275,13 +275,21 @@ def predict_structure(
   if not os.path.exists(msa_output_dir):
     os.makedirs(msa_output_dir)
 
-  #features_output_path = os.path.join(output_dir, 'features.pkl')
+  features_output_path = os.path.join(output_dir, 'features.pkl')
   #if not os.path.exists(features_output_path):
   # Get features.
   t_0 = time.time()
-  feature_dict = data_pipeline.process(
-      input_fasta_path=fasta_path,
-      msa_output_dir=msa_output_dir)
+
+# If we already have feature.pkl file, skip the MSA and template finding step
+# 
+  if os.path.exists(features_output_path):
+    feature_dict = pickle.load(open(features_output_path, 'rb'))
+  
+  else:
+    feature_dict = data_pipeline.process(
+        input_fasta_path=fasta_path,
+        msa_output_dir=msa_output_dir)
+
   timings['features'] = time.time() - t_0
 
   # Write out features as a pickled dictionary.
@@ -300,6 +308,7 @@ def predict_structure(
     logging.info('Running model %s on %s', model_name, fasta_name)
     t_0 = time.time()
     model_random_seed = model_index + random_seed * num_models
+    
     processed_feature_dict = model_runner.process_features(
         feature_dict, random_seed=model_random_seed)
     timings[f'process_features_{model_name}'] = time.time() - t_0
