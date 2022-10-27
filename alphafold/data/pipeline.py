@@ -15,17 +15,10 @@
 """Functions for building the input features for the AlphaFold model."""
 
 import os
-#<<<<<<< HEAD
-#from typing import Mapping, Sequence
-
-#import numpy as np
-#from absl import logging
 # Internal import (7716).
 
-#=======
 from typing import Any, Mapping, MutableMapping, Optional, Sequence, Union
 from absl import logging
-#>>>>>>> v2.2.2
 from alphafold.common import residue_constants
 from alphafold.data import msa_identifiers
 from alphafold.data import parsers
@@ -36,7 +29,6 @@ from alphafold.data.tools import hmmsearch
 from alphafold.data.tools import jackhmmer
 import numpy as np
 
-# Internal import (7716).
 
 FeatureDict = MutableMapping[str, np.ndarray]
 TemplateSearcher = Union[hhsearch.HHSearch, hmmsearch.Hmmsearch]
@@ -169,62 +161,6 @@ class DataPipeline:
     num_res = len(input_sequence)
 
     uniref90_out_path = os.path.join(msa_output_dir, 'uniref90_hits.sto')
-# <<<<<<< HEAD
-    # mgnify_out_path = os.path.join(msa_output_dir, 'mgnify_hits.sto')
-    # bfd_out_path = os.path.join(msa_output_dir, 'bfd_uniclust_hits.a3m')
-    # if not os.path.exists(uniref90_out_path):
-    #   logging.info("query uniref90")
-    #   jackhmmer_uniref90_result = self.jackhmmer_uniref90_runner.query(
-    #       input_fasta_path)
-    #   with open(uniref90_out_path, 'w') as f:
-    #     f.write(jackhmmer_uniref90_result['sto'])
-    # else:
-    #   logging.info("loading uniref90")
-    #   jackhmmer_uniref90_result ={}
-    #   with open(uniref90_out_path, 'r') as f:
-    #     jackhmmer_uniref90_result['sto'] = f.read()
-    # if not os.path.exists(mgnify_out_path):
-    #   logging.info("query mgnify")
-    #   jackhmmer_mgnify_result = self.jackhmmer_mgnify_runner.query(
-    #       input_fasta_path)
-    #   with open(mgnify_out_path, 'w') as f:
-    #     f.write(jackhmmer_mgnify_result['sto'])
-    # else:
-    #   logging.info("loading mgnify")
-    #   jackhmmer_mgnify_result={}
-    #   with open(mgnify_out_path, 'r') as f:
-    #     jackhmmer_mgnify_result['sto'] = f.read()
-
-    # if not os.path.exists(bfd_out_path):
-    #   logging.info("query mgnify")
-    #   hhblits_bfd_uniclust_result = self.hhblits_bfd_uniclust_runner.query(
-    #     input_fasta_path)
-    #   with open(bfd_out_path, 'w') as f:
-    #     f.write(hhblits_bfd_uniclust_result['a3m'])
-    # else:
-    #   logging.info("loading mgnify")
-    #   hhblits_bfd_uniclust_result={}
-    #   with open(bfd_out_path, 'r') as f:
-    #     hhblits_bfd_uniclust_result['a3m'] = f.read()
-
-    # uniref90_msa_as_a3m = parsers.convert_stockholm_to_a3m(
-    #     jackhmmer_uniref90_result['sto'], max_sequences=self.uniref_max_hits)
-    # hhsearch_result = self.hhsearch_pdb70_runner.query(uniref90_msa_as_a3m)
-
-    
-
-    # uniref90_msa, uniref90_deletion_matrix = parsers.parse_stockholm(
-    #     jackhmmer_uniref90_result['sto'])
-    # mgnify_msa, mgnify_deletion_matrix = parsers.parse_stockholm(
-    #     jackhmmer_mgnify_result['sto'])
-    # hhsearch_hits = parsers.parse_hhr(hhsearch_result)
-    # mgnify_msa = mgnify_msa[:self.mgnify_max_hits]
-    # mgnify_deletion_matrix = mgnify_deletion_matrix[:self.mgnify_max_hits]
-
-
-    # bfd_msa, bfd_deletion_matrix = parsers.parse_a3m(
-    #     hhblits_bfd_uniclust_result['a3m'])
-# =======
     jackhmmer_uniref90_result = run_msa_tool(
         msa_runner=self.jackhmmer_uniref90_runner,
         input_fasta_path=input_fasta_path,
@@ -232,13 +168,7 @@ class DataPipeline:
         msa_format='sto',
         use_precomputed_msas=self.use_precomputed_msas,
         max_sto_sequences=self.uniref_max_hits)
-    # HEAD
-    # jackhmmer_uniref90_result = self.jackhmmer_uniref90_runner.query(
-    #       input_fasta_path)
     mgnify_out_path = os.path.join(msa_output_dir, 'mgnify_hits.sto')
-
-    # HEAD
-    # mgnify_out_path = os.path.join(msa_output_dir, 'mgnify_hits.sto')
 
     jackhmmer_mgnify_result = run_msa_tool(
         msa_runner=self.jackhmmer_mgnify_runner,
@@ -247,10 +177,6 @@ class DataPipeline:
         msa_format='sto',
         use_precomputed_msas=self.use_precomputed_msas,
         max_sto_sequences=self.mgnify_max_hits)
-
-    # HEAD
-    # jackhmmer_mgnify_result = self.jackhmmer_mgnify_runner.query(
-    #     input_fasta_path)        
 
     msa_for_templates = jackhmmer_uniref90_result['sto']
     msa_for_templates = parsers.deduplicate_stockholm_msa(msa_for_templates)
@@ -295,7 +221,6 @@ class DataPipeline:
           msa_format='a3m',
           use_precomputed_msas=self.use_precomputed_msas)
       bfd_msa = parsers.parse_a3m(hhblits_bfd_uniclust_result['a3m'])
-#>>>>>>> v2.2.2
 
     templates_result = self.template_featurizer.get_templates(
         query_sequence=input_sequence,

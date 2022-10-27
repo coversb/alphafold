@@ -257,11 +257,9 @@ def from_prediction(
     A protein instance.
   """
   fold_output = result['structure_module']
-#<<<<<<< HEAD
   dist_per_residue = np.zeros_like(fold_output['final_atom_mask'])
   plddt = np.expand_dims(result['plddt'],axis=1)
   plddt = np.repeat(plddt, residue_constants.atom_type_num, axis=1)
-#=======
 
   def _maybe_remove_leading_dim(arr: np.ndarray) -> np.ndarray:
     return arr[0] if remove_leading_feature_dimension else arr
@@ -273,17 +271,11 @@ def from_prediction(
 
   if b_factors is None:
     b_factors = np.zeros_like(fold_output['final_atom_mask'])
-#>>>>>>> v2.2.2
 
   return Protein(
       aatype=_maybe_remove_leading_dim(features['aatype']),
       atom_positions=fold_output['final_atom_positions'],
       atom_mask=fold_output['final_atom_mask'],
-#<<<<<<< HEAD
-      # residue_index=features['residue_index'][0] + 1,
-      # b_factors=plddt)
-#=======
       residue_index=_maybe_remove_leading_dim(features['residue_index']) + 1,
       chain_index=chain_index,
       b_factors=b_factors)
-#>>>>>>> v2.2.2

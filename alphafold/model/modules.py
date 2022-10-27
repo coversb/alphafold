@@ -1738,7 +1738,6 @@ class EmbeddingsAndEvoformer(hk.Module):
               dgram)
 
     if c.recycle_features:
-#<<<<<<< HEAD
       if 'prev_msa_first_row' in batch:
         prev_msa_first_row = hk.LayerNorm([-1],
                                           True,
@@ -1753,22 +1752,6 @@ class EmbeddingsAndEvoformer(hk.Module):
                                          True,
                                          name='prev_pair_norm')(
                                              batch['prev_pair'])
-#=======
-#      prev_msa_first_row = hk.LayerNorm(
-#          axis=[-1],
-#          create_scale=True,
-#          create_offset=True,
-#          name='prev_msa_first_row_norm')(
-#              batch['prev_msa_first_row'])
-#      msa_activations = msa_activations.at[0].add(prev_msa_first_row)
-
-#      pair_activations += hk.LayerNorm(
-#          axis=[-1],
-#          create_scale=True,
-#          create_offset=True,
-#          name='prev_pair_norm')(
-#              batch['prev_pair'])
-#>>>>>>> v2.2.2
 
     # Relative position encoding.
     # Jumper et al. (2021) Suppl. Alg. 4 "relpos"

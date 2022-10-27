@@ -41,7 +41,6 @@ import numpy as np
 
 # Internal import (7716).
 
-#<<<<<<< HEAD
 #### USER CONFIGURATION ####
 
 # Set to target of scripts/download_all_databases.sh
@@ -106,91 +105,35 @@ flags.DEFINE_list('model_names', model_names, 'Names of models to use.')
 flags.DEFINE_string('data_dir', data_dir, 'Path to directory of supporting data.')
 flags.DEFINE_string('jackhmmer_binary_path', 'jackhmmer',
                     'Path to the JackHMMER executable.')
-# v2.2.2
-#flags.DEFINE_string('hhblits_binary_path', shutil.which('hhblits'),
-#                    'Path to the HHblits executable.')
-
 flags.DEFINE_string('hhblits_binary_path', 'hhblits',
                     'Path to the HHblits executable.')
 flags.DEFINE_string('hhsearch_binary_path', 'hhsearch',
                     'Path to the HHsearch executable.')
-# v2.2.2
-#flags.DEFINE_string('hhsearch_binary_path', shutil.which('hhsearch'),
-#                    'Path to the HHsearch executable.')
-
-# v2.2.2, HEAD中没有
 flags.DEFINE_string('hmmsearch_binary_path', shutil.which('hmmsearch'),
                     'Path to the hmmsearch executable.')
-
-# v2.2.2, HEAD中没有
 flags.DEFINE_string('hmmbuild_binary_path', shutil.which('hmmbuild'),
                     'Path to the hmmbuild executable.')
-
 flags.DEFINE_string('kalign_binary_path', 'kalign',
                     'Path to the Kalign executable.')
-# =======
-# logging.set_verbosity(logging.INFO)
-
-# flags.DEFINE_list(
-#     'fasta_paths', None, 'Paths to FASTA files, each containing a prediction '
-#     'target that will be folded one after another. If a FASTA file contains '
-#     'multiple sequences, then it will be folded as a multimer. Paths should be '
-#     'separated by commas. All FASTA paths must have a unique basename as the '
-#     'basename is used to name the output directories for each prediction.')
-
-# flags.DEFINE_string('data_dir', None, 'Path to directory of supporting data.')
-#flags.DEFINE_string('output_dir', None, 'Path to a directory that will '
-#                    'store the results.')
-#flags.DEFINE_string('jackhmmer_binary_path', shutil.which('jackhmmer'),
-#                    'Path to the JackHMMER executable.')
-#flags.DEFINE_string('hhblits_binary_path', shutil.which('hhblits'),
-#                    'Path to the HHblits executable.')
-#flags.DEFINE_string('hhsearch_binary_path', shutil.which('hhsearch'),
-#                    'Path to the HHsearch executable.')
-#flags.DEFINE_string('hmmsearch_binary_path', shutil.which('hmmsearch'),
-#                    'Path to the hmmsearch executable.')
-#flags.DEFINE_string('hmmbuild_binary_path', shutil.which('hmmbuild'),
-#                    'Path to the hmmbuild executable.')
-# flags.DEFINE_string('kalign_binary_path', shutil.which('kalign'),
-# >>>>>>> v2.2.2
 flags.DEFINE_string('uniref90_database_path', uniref90_database_path, 'Path to the Uniref90 '
                     'database for use by JackHMMER.')
 flags.DEFINE_string('mgnify_database_path', mgnify_database_path, 'Path to the MGnify '
                     'database for use by JackHMMER.')
 flags.DEFINE_string('bfd_database_path', bfd_database_path, 'Path to the BFD '
                     'database for use by HHblits.')
-#<<<<<<< HEAD
 flags.DEFINE_string('uniclust30_database_path', uniclust30_database_path, 'Path to the Uniclust30 '
                     'database for use by HHblits.')
 flags.DEFINE_string('pdb70_database_path', pdb70_database_path, 'Path to the PDB70 '
                     'database for use by HHsearch.')
-# v2.2.2
-#flags.DEFINE_string('pdb70_database_path', pdb70_database_path, 'Path to the PDB70 '
-#                    'database for use by HHsearch.')
 flags.DEFINE_string('template_mmcif_dir', template_mmcif_dir, 'Path to a directory with '
                     'template mmCIF structures, each named <pdb_id>.cif')
-#=======
 flags.DEFINE_string('small_bfd_database_path', None, 'Path to the small '
                     'version of BFD used with the "reduced_dbs" preset.')
-# flags.DEFINE_string('uniclust30_database_path', None, 'Path to the Uniclust30 '
-#                     'database for use by HHblits.')
-# v2.2.2
-#flags.DEFINE_string('uniclust30_database_path', uniclust30_database_path, 'Path to the Uniclust30 '
-#                    'database for use by HHblits.')
 
 flags.DEFINE_string('uniprot_database_path', None, 'Path to the Uniprot '
                     'database for use by JackHMMer.')
-# flags.DEFINE_string('pdb70_database_path', None, 'Path to the PDB70 '
-#                     'database for use by HHsearch.')
-# v2.2.2
-#flags.DEFINE_string('pdb70_database_path', pdb70_database_path, 'Path to the PDB70 '
-#                    'database for use by HHsearch.')
 flags.DEFINE_string('pdb_seqres_database_path', None, 'Path to the PDB '
                     'seqres database for use by hmmsearch.')
-# flags.DEFINE_string('template_mmcif_dir', template_mmcif_dir, 'Path to a directory with '
-#flags.DEFINE_string('template_mmcif_dir', None, 'Path to a directory with '
-                    # 'template mmCIF structures, each named <pdb_id>.cif')
-#>>>>>>> v2.2.2
 flags.DEFINE_string('max_template_date', '2020-05-14', 'Maximum template release date '
                     'to consider. Important if folding historical test sets.')
 flags.DEFINE_string('obsolete_pdbs_path', obsolete_pdbs_path, 'Path to file containing a '
