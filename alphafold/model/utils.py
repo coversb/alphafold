@@ -70,11 +70,7 @@ def final_init(config):
 
 def batched_gather(params, indices, axis=0, batch_dims=0):
   """Implements a JAX equivalent of `tf.gather` with `axis` and `batch_dims`."""
-<<<<<<< HEAD
-  take_fn = lambda p, i: jnp.take(p, i, axis=axis, mode="clip")
-=======
   take_fn = lambda p, i: jnp.take(p, i, axis=axis, mode='clip')
->>>>>>> v2.3.2
   for _ in range(batch_dims):
     take_fn = jax.vmap(take_fn)
   return take_fn(params, indices)

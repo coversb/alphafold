@@ -45,10 +45,8 @@ import numpy as np
 
 #### USER CONFIGURATION ####
 
-<<<<<<< HEAD
 # Set to target of scripts/download_all_databases.sh
 DOWNLOAD_DIR = '/alphafold_data_set'
-=======
 
 @enum.unique
 class ModelsToRelax(enum.Enum):
@@ -56,13 +54,6 @@ class ModelsToRelax(enum.Enum):
   BEST = 1
   NONE = 2
 
-flags.DEFINE_list(
-    'fasta_paths', None, 'Paths to FASTA files, each containing a prediction '
-    'target that will be folded one after another. If a FASTA file contains '
-    'multiple sequences, then it will be folded as a multimer. Paths should be '
-    'separated by commas. All FASTA paths must have a unique basename as the '
-    'basename is used to name the output directories for each prediction.')
->>>>>>> v2.3.2
 
 # Path to a directory that will store the results.
 output_dir = '~/af2_out'
@@ -147,12 +138,9 @@ flags.DEFINE_string('template_mmcif_dir', template_mmcif_dir, 'Path to a directo
                     'template mmCIF structures, each named <pdb_id>.cif')
 flags.DEFINE_string('small_bfd_database_path', None, 'Path to the small '
                     'version of BFD used with the "reduced_dbs" preset.')
-<<<<<<< HEAD
 
-=======
 flags.DEFINE_string('uniref30_database_path', None, 'Path to the UniRef30 '
                     'database for use by HHblits.')
->>>>>>> v2.3.2
 flags.DEFINE_string('uniprot_database_path', None, 'Path to the Uniprot '
                     'database for use by JackHMMer.')
 flags.DEFINE_string('pdb_seqres_database_path', None, 'Path to the PDB '
